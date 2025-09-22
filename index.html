@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lunar Mapping</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100px;
+      height: 100vh;
+      background: #2d2d2d;
+      padding-top: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sidebar-logo {
+      width: 70px;
+      height: 70px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .sidebar-home {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 20px;
+      background: #333;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .sidebar-home img {
+      width: 28px;
+      height: 28px;
+    }
+    .sidebar-home:hover {
+      background: #555;
+    }
+    .sidebar-toggle {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 20px;
+      background: #333;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle img {
+      width: 32px;
+      height: 32px;
+    }
+    .sidebar-icons-group {
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      max-height: calc(100vh - 70px - 50px - 20px - 50px - 20px - 60px - 24px);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar-icons-group::-webkit-scrollbar {
+      display: none;
+    }
+    .sidebar-icons-group.show {
+      display: flex;
+    }
+    .sidebar-icon, .sidebar-nav {
+      width: 60px;
+      height: 60px;
+      margin: 12px auto;
+      background: #333;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: #fff;
+      transition: background 0.3s, color 0.3s;
+      flex-shrink: 0;
+    }
+    .sidebar-icon:hover, .sidebar-nav:hover, .sidebar-toggle:hover {
+      background: #555;
+      color: #ffd700;
+    }
+    .sidebar-nav img {
+      width: 32px;
+      height: 32px;
+    }
+    .sidebar-label { display: none; }
+    .popup {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 100px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      color: #fff;
+      z-index: 20;
+    }
+    .popup div { margin: 5px 0; }
+
+    /* Floating search button - Updated styling */
+    .floating-search-btn {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      z-index: 200;
+      background: linear-gradient(135deg, #6c757d, #5a6268);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
+    .floating-search-btn:hover {
+      background: linear-gradient(135deg, #5a6268, #495057);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      transform: translateY(-2px);
+    }
+    .floating-search-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .floating-search-btn::before {
+      content: '🔍';
+      font-size: 20px;
+    }
+
+    /* Floating dialog box - Grey styling */
+    .floating-dialog {
+      display: none;
+      position: fixed;
+      top: 30px;
+      right: 100px;
+      width: 320px;
+      background: linear-gradient(135deg, #6c757d, #5a6268);
+      color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 6px 20px rgba(0,0,0,0.2);
+      padding: 24px;
+      z-index: 201;
+      flex-direction: column;
+      gap: 16px;
+      animation: slideIn 0.3s ease-out;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    @keyframes slideIn {
+      from { 
+        opacity: 0; 
+        transform: translateX(20px) scale(0.95);
+      }
+      to { 
+        opacity: 1; 
+        transform: translateX(0) scale(1);
+      }
+    }
+    
+    .floating-dialog::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      right: -8px;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, #6c757d, #5a6268);
+      border-right: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      transform: rotate(-45deg);
+      z-index: -1;
+    }
+    
+    .floating-dialog h3 {
+      margin: 0 0 16px 0;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .floating-dialog label {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      display: block;
+      color: #e9ecef;
+      font-weight: 500;
+    }
+    
+    .floating-dialog input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      outline: none;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    
+    .floating-dialog input[type="text"]:focus {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.15);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+    
+    .floating-dialog button {
+      width: 100%;
+      background: linear-gradient(135deg, #495057, #343a40);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .floating-dialog button:hover {
+      background: linear-gradient(135deg, #343a40, #212529);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .floating-dialog button:active {
+      transform: translateY(0);
+    }
+    
+    .floating-dialog .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: #e9ecef;
+      font-size: 1.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .floating-dialog .close-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    /* Input field styling improvements */
+    .input-group {
+      position: relative;
+    }
+    
+    .floating-dialog input[type="text"]::placeholder {
+      color: #adb5bd;
+      font-style: italic;
+    }
+
+    /* Colorbar styles - positioned in bottom right */
+    .colorbar-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .color-bar-img {
+      width: 200px;
+      height: 20px;
+      border-radius: 4px;
+      background: linear-gradient(to right, blue, cyan, green, yellow, orange, red);
+      margin-bottom: 8px;
+    }
+    
+    .color-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 200px;
+      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 500;
+    }
+    
+    .color-bar-labels .center-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <!-- ISRO logo at the top -->
+    <img src="img/Indian_Space_Research_Organisation_Logo.svg.png" alt="ISRO Logo" class="sidebar-logo">
+    <!-- Home icon below logo -->
+    <div class="sidebar-home" onclick="window.location.href='index.html'" title="Home">
+      <img src="img/home.png" alt="Home">
+    </div>
+    <!-- Toggle icon for showing/hiding element icons -->
+    <div class="sidebar-toggle" id="toggle-elements" title="Show/Hide Elements">
+      <img src="img/moon.png" alt="Toggle Elements">
+    </div>
+    <!-- Element icons group, hidden by default -->
+    <div class="sidebar-icons-group" id="elements-group">
+      <div class="sidebar-icon" data-element="si">
+        <img src="img/silicon.jpg" alt="Si" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="al">
+        <img src="img/aluminium.jpg" alt="Al" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="ca">
+        <img src="img/calcium-2.jpg" alt="Ca" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="mg">
+        <img src="img/magnesium-2.jpg" alt="Mg" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="fe">
+        <img src="img/iron.jpg" alt="Fe" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="mg-si">
+        <img src="img/Mg-Si.png" alt="Mg/Si" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="ca-si">
+        <img src="img/Ca-Si.png" alt="Ca/Si" style="width:24px;height:24px;">
+      </div>
+      <div class="sidebar-icon" data-element="al-si">
+        <img src="img/Al-Si.png" alt="Al/Si" style="width:24px;height:24px;">
+      </div>
+    </div>
+    <!-- 2D Map icon button below all element icons -->
+    <div class="sidebar-nav" onclick="window.location.href='2dmap.html'">
+      <img src="img/2d.png" alt="2D Map">
+      <span class="sidebar-label">2D Map</span>
+    </div>
+  </div>
+
+  <!-- Floating search button -->
+  <!--<button class="floating-search-btn" id="open-search-dialog" title="Search Location"></button>-->
+
+  <!-- Floating dialog box -->
+  <form class="floating-dialog" id="search-dialog">
+    <button type="button" class="close-btn" id="close-search-dialog" title="Close">&times;</button>
+    <h3>🌙 Search Location</h3>
+    <div class="input-group">
+      <label for="lat-input">Latitude</label>
+      <input type="text" id="lat-input" name="latitude" placeholder="e.g., -23.4567" required>
+    </div>
+    <div class="input-group">
+      <label for="lon-input">Longitude</label>
+      <input type="text" id="lon-input" name="longitude" placeholder="e.g., 45.7890" required>
+    </div>
+    <button type="submit">Search Location</button>
+  </form>
+
+  <!-- Colorbar in bottom right -->
+  <div class="colorbar-container">
+    <div class="color-bar-img"></div>
+    <div class="color-bar-labels">
+      <span>0</span>
+      <span class="center-label">% Abundance</span>
+      <span>100</span>
+    </div>
+  </div>
+
+  <div class="popup">
+    <div class="lat"></div>
+    <div class="lon"></div>
+    <div class="oxy">Oxygen:</div>
+  </div>
+  <script src="js/script.js"></script>
+  <script>
+    // Toggle element icons visibility
+    document.getElementById('toggle-elements').addEventListener('click', function() {
+      const group = document.getElementById('elements-group');
+      group.classList.toggle('show');
+    });
+
+    // Floating search dialog logic
+    const openBtn = document.getElementById('open-search-dialog');
+    const dialog = document.getElementById('search-dialog');
+    const closeBtn = document.getElementById('close-search-dialog');
+
+    openBtn.addEventListener('click', () => {
+      dialog.style.display = 'flex';
+      // Focus on first input for better UX
+      setTimeout(() => {
+        document.getElementById('lat-input').focus();
+      }, 100);
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      dialog.style.display = 'none';
+    });
+    
+    // Hide dialog on outside click
+    window.addEventListener('mousedown', (e) => {
+      if (dialog.style.display === 'flex' && !dialog.contains(e.target) && e.target !== openBtn) {
+        dialog.style.display = 'none';
+      }
+    });
+    
+    // Handle form submission
+    dialog.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const latitude = document.getElementById('lat-input').value;
+      const longitude = document.getElementById('lon-input').value;
+      
+      // Add your search logic here
+      console.log('Searching for:', { latitude, longitude });
+      
+      // Close dialog after search
+      dialog.style.display = 'none';
+      
+      // Clear inputs
+      document.getElementById('lat-input').value = '';
+      document.getElementById('lon-input').value = '';
+    });
+    
+    // Add escape key to close dialog
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && dialog.style.display === 'flex') {
+        dialog.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

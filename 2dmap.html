@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D Heatmap Mapping</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: url('img/stars.jpg') center center/cover no-repeat;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 90px;
+      height: 100vh;
+      background: #393939;
+      padding-top: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sidebar-logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .sidebar-home, .sidebar-2dmap {
+      width: 50px;
+      height: 50px;
+      background: #333;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.3s;
+    }
+    .sidebar-home img, .sidebar-2dmap img {
+      width: 28px;
+      height: 28px;
+    }
+    .sidebar-home:hover, .sidebar-2dmap:hover {
+      background: #555;
+    }
+    .main-content {
+      margin-left: 90px;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .header {
+      width: 100%;
+      background: #444;
+      color: #fff;
+      font-family: 'Georgia', serif;
+      font-size: 2.5rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      padding: 18px 0 10px 40px;
+      box-sizing: border-box;
+      border-bottom: 2px solid #222;
+      margin-bottom: 0;
+      text-align: left;
+    }
+    .dropdown-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px 0 10px 0;
+      position: relative;
+    }
+    .element-dropdown {
+      font-size: 1.3rem;
+      font-weight: bold;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: 2px solid #222;
+      background: #fff;
+      color: #222;
+      min-width: 220px;
+      text-align: center;
+      outline: none;
+      margin-right: 30px;
+    }
+    .color-bar-row {
+      width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .color-bar-img {
+      width: 300px;
+      height: 28px;
+      margin-right: 12px;
+      border-radius: 4px;
+      background: linear-gradient(to right, blue, cyan, green, yellow, orange, red);
+    }
+    .color-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 320px;
+      font-size: 1rem;
+      color: #fff;
+      margin-top: 2px;
+      margin-left: 0;
+    }
+    .map-container {
+      width: 900px;
+      height: 500px;
+      background: #111;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .moon-background {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1;
+      opacity: 0.7;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .image {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 2;
+      object-fit: cover;
+      pointer-events: none;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="img/Indian_Space_Research_Organisation_Logo.svg.png" alt="ISRO Logo" class="sidebar-logo">
+    <div class="sidebar-home" onclick="window.location.href='index.html'" title="Home">
+      <img src="img/home.png" alt="Home">
+    </div>
+    <div class="sidebar-2dmap" onclick="window.location.href='2dmap.html'" title="2D Map">
+      <img src="img/2d.png" alt="2D Map">
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="header">2D Heatmap Mapping</div>
+    <div class="dropdown-row">
+      <select class="element-dropdown" id="element-dropdown">
+        <option value="pt-detect">Plotted Point</option>
+        <option value="mg">Magnesium</option>
+        <option value="si">Silicon</option>
+        <option value="al">Aluminium</option>
+        <option value="ca">Calcium</option>
+        <option value="fe">Iron</option>
+        <option value="mg-si">Mg/Si</option>
+        <option value="ca-si">Ca/Si</option>
+        <option value="al-si">Al/Si</option>
+        
+      </select>
+    </div>
+    <div class="color-bar-row">
+      <div>
+        <div class="color-bar-img"></div>
+        <div class="color-bar-labels">
+          <span>0</span>
+          <span style="margin-left: 90px;">% Abundance</span>
+          <span>100</span>
+        </div>
+      </div>
+    </div>
+    <div class="map-container">
+      <img class="moon-background" src="img/moonimg.jpg" alt="Moon Background">
+      <img class="image" src="img/Pt_detect.png" alt="Heatmap">
+    </div>
+  </div>
+  <script>
+    // Element images mapping
+    const elementImages = {
+     // Mg: 'img/Mg_final.png',
+      si: 'img/Si_final.png',
+      al: 'img/Al_final.png',
+      ca: 'img/Ca_final.png',
+      mg: 'img/Mg_final.png',
+      fe: 'img/Fe_final.png',
+      'mg-si': 'img/Mg_Si_final.png',
+      'ca-si': 'img/Ca_Si_final.png',
+      'al-si': 'img/Al_Si_final.png'
+      
+    };
+    const dropdown = document.getElementById('element-dropdown');
+    const image = document.querySelector('.image');
+    dropdown.addEventListener('change', function() {
+      const ele = dropdown.value;
+      if (elementImages[ele]) {
+        image.src = elementImages[ele];
+      }
+    });
+  </script>
+</body>
+</html>

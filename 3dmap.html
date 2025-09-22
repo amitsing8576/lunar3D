@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Heatmap Mapping</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    .popup { display: none; position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border: 1px solid black; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div class="popup">
+    <div class="lat"></div>
+    <div class="lon"></div>
+    <div class="oxy">Oxygen:</div>
+    <!-- Add other elements as needed -->
+  </div>
+  <script src="js/script2.js"></script>
+</body>
+</html>
